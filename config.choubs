@@ -1,0 +1,12 @@
+[block_list]
+site_list = ["www.facebook.com", "facebook.com", "www.twitter.com", "twitter.com"]
+
+[work_hours]
+start = [9, 30]
+end = [5, 30]
+
+[fun_day]
+fun_day = False
+
+[day_off]
+off_days = [5, 6]
