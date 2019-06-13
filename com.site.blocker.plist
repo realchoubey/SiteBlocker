@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.site.blocker.plist</string>
+	<key>WorkingDirectory</key>
+	<string>WORKING_DIRECOTRY</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python</string>
+        <string>WORKING_DIRECOTRY/BlockWebSites.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>WORKING_DIRECOTRY/siteblocker.log</string>
+    <key>StandardErrorPath</key>
+    <string>WORKING_DIRECOTRY/siteblocker.log</string>
+</dict>
+</plist>

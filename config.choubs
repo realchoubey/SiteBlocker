@@ -7,8 +7,8 @@ start = [9, 30]
 end = [17, 30]
 
 [fun_day]
-# True or False, if holiday.
-fun_day = True
+# True or False, as per holiday.
+fun_day = False
 
 [day_off]
 # 0 - Monday and 6 - Sunday.
