@@ -3,8 +3,8 @@ site_list = ["www.facebook.com", "facebook.com", "www.twitter.com", "twitter.com
 
 [work_hours]
 # Timings in 24 hrs format
-start = [9, 30]
-end = [17, 30]
+start = [9, 36]
+end = [16, 45]
 
 [fun_day]
 # True or False, as per holiday.

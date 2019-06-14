@@ -6,11 +6,19 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 import ast
+import ChoubsLogging
 import ConfigParser
 import os
 import threading
 import time
 
+
+# Get log file
+choubs_logger = ChoubsLogging.myLogger("BlockWebSites")
+logger = choubs_logger.get_logger()
+
+# Default sleep time
+DEFAULT_SLEEP_TIME = 5
 
 # change hosts path according to your OS
 hosts_path = "/etc/hosts"
@@ -27,9 +35,8 @@ class ChangeDetector(FileSystemEventHandler):
         self.monitoring_file = file_name
 
     def on_modified(self, event):
-        print("Got it! {} ".format(event.src_path))
         if os.path.basename(event.src_path) == self.monitoring_file:
-            print("Sending Exception to {}".format(self.boost_thread_id))
+            logger.info("Config file changed, applying changes please wait!")
             restart_thread_event.set()
 
 
@@ -51,7 +58,7 @@ def block_sites(website_list):
         content = file.read()
         for website in website_list:
             if website in content:
-                pass
+                continue
             else:
                 # mapping host names to your localhost IP address
                 write_string = "{} {}\n".format(redirect, website)
@@ -63,9 +70,7 @@ def unblock_site(website_list):
         content = file.readlines()
         file.seek(0)
         for line in content:
-            print(line)
             if not any(website in line for website in website_list):
-                print("Writing...")
                 file.write(line)
 
         # removing host names from host file
@@ -75,54 +80,60 @@ def unblock_site(website_list):
 def boost_productivity():
     while True:
         restart_thread_event.clear()
+        time.sleep(DEFAULT_SLEEP_TIME)
         sleep_time = reset_productivity()
+        logger.info("Sleeping for {} seconds.".format(sleep_time))
 
         while sleep_time > 0:
             if not restart_thread_event.is_set():
-                sleep_time -= 5
-                time.sleep(5)
+                time.sleep(DEFAULT_SLEEP_TIME)
+                sleep_time -= DEFAULT_SLEEP_TIME
             else:
                 break
 
 
 def reset_productivity():
-    conf_details = read_conf()
-    website_list = ast.literal_eval(conf_details["site_list"])
-    start_time = ast.literal_eval(conf_details["start"])
-    end_time = ast.literal_eval(conf_details["end"])
-    day_off = ast.literal_eval(conf_details["off_days"])
-    is_holiday = ast.literal_eval(conf_details["fun_day"])
+    try:
+        conf_details = read_conf()
+        website_list = ast.literal_eval(conf_details["site_list"])
+        start_time = ast.literal_eval(conf_details["start"])
+        end_time = ast.literal_eval(conf_details["end"])
+        day_off = ast.literal_eval(conf_details["off_days"])
+        is_holiday = ast.literal_eval(conf_details["fun_day"])
 
-    next_day = dt(dt.now().year, dt.now().month, dt.now().day + 1,
-                  start_time[0], start_time[1])
-    seconds_to_sleep = 30 * 60
-
-    if is_holiday:
-        unblock_site(website_list)
-        print("Seems to be holiday, enjoy your day!!!")
-        seconds_to_sleep = (next_day - dt.now()).total_seconds()
-    else:
-        if dt.now().day in day_off:
-            unblock_site(website_list)
-
-        # time of your work
-        wt_start = dt(dt.now().year, dt.now().month, dt.now().day,
+        next_day = dt(dt.now().year, dt.now().month, dt.now().day + 1,
                       start_time[0], start_time[1])
-        print(wt_start)
-        wt_end = dt(dt.now().year, dt.now().month, dt.now().day,
-                    end_time[0], end_time[1])
+        seconds_to_sleep = 30 * 60
 
-        if wt_start < dt.now() and dt.now() < wt_end:
-            print("Working hours, please work...")
-            block_sites(website_list)
-            seconds_to_sleep = (wt_end - dt.now()).total_seconds()
-        else:
+        if is_holiday:
             unblock_site(website_list)
-            print("Sites are unblocked now, enjoy your day!!!")
-
+            logger.info("Seems to be holiday, enjoy your day!!!")
             seconds_to_sleep = (next_day - dt.now()).total_seconds()
+        else:
+            if dt.now().day in day_off:
+                unblock_site(website_list)
 
-    return int(seconds_to_sleep)
+            # time of your work
+            wt_start = dt(dt.now().year, dt.now().month, dt.now().day,
+                          start_time[0], start_time[1])
+            logger.info(wt_start)
+            wt_end = dt(dt.now().year, dt.now().month, dt.now().day,
+                        end_time[0], end_time[1])
+
+            if wt_start < dt.now() and dt.now() < wt_end:
+                logger.info("Working hours, please work...")
+                block_sites(website_list)
+                seconds_to_sleep = (wt_end - dt.now()).total_seconds()
+            else:
+                unblock_site(website_list)
+                logger.info("Sites are unblocked now, enjoy your day!!!")
+
+                seconds_to_sleep = (next_day - dt.now()).total_seconds()
+
+        return int(seconds_to_sleep)
+    except Exception as e:
+        logger.exception("Got {}".format(e))
+        return DEFAULT_SLEEP_TIME
 
 
 def monitor_file(thread_id):
@@ -141,6 +152,7 @@ def monitor_file(thread_id):
 
 
 if __name__ == "__main__":
+    logger.info("Starting blocker...")
     thread_boost = threading.Thread(target=boost_productivity,
                                     name="boost_productivity")
     thread_boost.daemon = True
