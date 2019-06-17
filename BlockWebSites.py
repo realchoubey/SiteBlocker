@@ -81,7 +81,8 @@ def boost_productivity():
     while True:
         restart_thread_event.clear()
         time.sleep(DEFAULT_SLEEP_TIME)
-        sleep_time = reset_productivity()
+        reset_productivity()
+        sleep_time = 30 * 60
         logger.info("Sleeping for {} seconds.".format(sleep_time))
 
         while sleep_time > 0:
@@ -101,14 +102,9 @@ def reset_productivity():
         day_off = ast.literal_eval(conf_details["off_days"])
         is_holiday = ast.literal_eval(conf_details["fun_day"])
 
-        next_day = dt(dt.now().year, dt.now().month, dt.now().day + 1,
-                      start_time[0], start_time[1])
-        seconds_to_sleep = 30 * 60
-
         if is_holiday:
             unblock_site(website_list)
             logger.info("Seems to be holiday, enjoy your day!!!")
-            seconds_to_sleep = (next_day - dt.now()).total_seconds()
         else:
             if dt.now().day in day_off:
                 unblock_site(website_list)
@@ -123,17 +119,11 @@ def reset_productivity():
             if wt_start < dt.now() and dt.now() < wt_end:
                 logger.info("Working hours, please work...")
                 block_sites(website_list)
-                seconds_to_sleep = (wt_end - dt.now()).total_seconds()
             else:
                 unblock_site(website_list)
                 logger.info("Sites are unblocked now, enjoy your day!!!")
-
-                seconds_to_sleep = (next_day - dt.now()).total_seconds()
-
-        return int(seconds_to_sleep)
     except Exception as e:
         logger.exception("Got {}".format(e))
-        return DEFAULT_SLEEP_TIME
 
 
 def monitor_file(thread_id):
